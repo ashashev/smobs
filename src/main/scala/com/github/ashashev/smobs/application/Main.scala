@@ -9,7 +9,8 @@ object Main extends App {
       migrator.travers()
       FakeProcessing.printStatistics()
     case Some(Params(Config(config), false, _)) =>
-      ???
+      val migrator = MigratorProjects(config, DefaultProcessing)
+      migrator.travers()
     case _ =>
       System.exit(1)
   }
