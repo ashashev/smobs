@@ -6,9 +6,8 @@ object Main extends App {
       println(Config.toJson(Config()))
     case Some(Params(Config(config), true, _)) => //not migrate
       val migrator = MigratorProjects(config, FakeProcessing)
-      migrator.traversGeneral()
-      if (config.migratePersonalRepositories)
-        migrator.traversPersonal()
+      migrator.travers()
+      FakeProcessing.printStatistics()
     case Some(Params(Config(config), false, _)) =>
       ???
     case _ =>

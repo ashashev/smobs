@@ -30,24 +30,11 @@ class MigratorProjects(source: BitbucketServer,
     case None => ()
   }
 
-  private def traversPersonal(ss: Seq[Project], ds: Seq[Project]): Unit = ss.headOption match {
-    case Some(sp) =>
-      ds.find(_.key == sp.key) match {
-        case Some(dp) =>
-          MigratorRepositoies(source, destination, sp, dp, extProcessing).travers()
-          traversPersonal(ss.tail, ds)
-        case None => traversPersonal(ss.tail, ds)
-      }
-    case None => ()
+  def travers(): Unit = {
+    travers(source.getProjects().filter(transformer.filteredProjects), destination.getProjects())
+    travers(source.getUsers().filter(transformer.filteredUsers), destination.getUsers())
   }
 
-  def traversGeneral(): Unit = {
-    travers(source.getProjects().filter(transformer.filtered), destination.getProjects())
-  }
-
-  def traversPersonal(): Unit = {
-    traversPersonal(source.getUsers(), destination.getUsers())
-  }
 }
 
 object MigratorProjects {

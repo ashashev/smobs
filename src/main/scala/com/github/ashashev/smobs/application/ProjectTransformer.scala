@@ -4,24 +4,40 @@ import com.github.ashashev.smobs.core.bitbucket.server._
 
 import scala.util.matching.Regex
 
-class ProjectTransformer(include: Set[Regex], exclude: Set[Regex], prefix: String) {
+class ProjectTransformer(includeProjects: Set[Regex],
+                         excludeProjects: Set[Regex],
+                         includeUsers: Set[Regex],
+                         excludeUsers: Set[Regex],
+                         prefix: String) {
 
   import ProjectTransformer._
 
-  def filtered(project: Requests.Project): Boolean = {
-    include.exists(_.findFirstIn(project.name).isDefined) &&
-      exclude.forall(_.findFirstIn(project.name).isEmpty)
+  def filteredProjects(project: Requests.Project): Boolean = {
+    includeProjects.exists(_.findFirstIn(project.name).isDefined) &&
+      excludeProjects.forall(_.findFirstIn(project.name).isEmpty)
+  }
+
+  def filteredUsers(project: Requests.Project): Boolean = {
+    includeUsers.exists(_.findFirstIn(project.name).isDefined) &&
+      excludeUsers.forall(_.findFirstIn(project.name).isEmpty)
   }
 
   def transform(project: Requests.Project,
                 existed: Seq[Requests.Project]): (Requests.Project, State) = {
-    val name = prefix + project.name
-    existed.find(_.name == name) match {
-      case Some(p) => (p, Exist)
-      case None =>
-        val keys = existed.map(_.key).toSet
-        val key = newKey(project.key, keys, prefix)
-        (project.copy(key = key, name = name), NotExist)
+    if (project.key.startsWith("~")) {
+      existed.find(_.key == project.key) match {
+        case Some(p) => (p, Exist)
+        case None => (project, NotExist)
+      }
+    } else {
+      val name = prefix + project.name
+      existed.find(_.name == name) match {
+        case Some(p) => (p, Exist)
+        case None =>
+          val keys = existed.map(_.key).toSet
+          val key = newKey(project.key, keys, prefix)
+          (project.copy(key = key, name = name), NotExist)
+      }
     }
   }
 }
@@ -35,15 +51,24 @@ object ProjectTransformer {
   final case object NotExist extends State
 
   def apply(config: Config): ProjectTransformer = {
-    new ProjectTransformer(config.includeProjects.toSet[String].map(_.r),
+    new ProjectTransformer(
+      config.includeProjects.toSet[String].map(_.r),
       config.excludeProjects.toSet[String].map(_.r),
+      config.includeUsers.toSet[String].map(_.r),
+      config.excludeUsers.toSet[String].map(_.r),
       config.addedProjectPrefix)
   }
 
-  def apply(include: Set[Regex],
-            exclude: Set[Regex],
+  def apply(includeProjects: Set[Regex],
+            excludeProjects: Set[Regex],
+            includeUsers: Set[Regex],
+            excludeUsers: Set[Regex],
             prefix: String): ProjectTransformer =
-    new ProjectTransformer(include, exclude, prefix)
+    new ProjectTransformer(includeProjects,
+      excludeProjects,
+      includeUsers,
+      excludeUsers,
+      prefix)
 
   /**
     * Creates a new key.

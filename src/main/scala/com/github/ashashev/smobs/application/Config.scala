@@ -13,7 +13,8 @@ case class Config(source: Server = Server(),
                   destination: Server = Server(),
                   includeProjects: Seq[String] = Seq(".*"),
                   excludeProjects: Seq[String] = Seq.empty[String],
-                  migratePersonalRepositories: Boolean = false,
+                  includeUsers: Seq[String] = Seq(".*"),
+                  excludeUsers: Seq[String] = Seq.empty[String],
                   addedProjectPrefix: String = ""
                  )
 
