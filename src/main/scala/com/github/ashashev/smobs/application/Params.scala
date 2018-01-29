@@ -1,3 +1,10 @@
+/*
+ * smobs
+ * A tool for simple migration of bitbucket server repositories to another bitbucket server
+ * Copyright (C) 2018, Aleksei Shashev
+ * Licensed under GPLv3 license (see LICENSE)
+ */
+
 package com.github.ashashev.smobs.application
 
 case class Params(config: String, notMigrate: Boolean = false, showExample: Boolean = false)
