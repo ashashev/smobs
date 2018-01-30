@@ -7,6 +7,8 @@
 
 package com.github.ashashev.smobs.core.bitbucket.server
 
+import java.net.HttpURLConnection._
+
 import org.json4s.DefaultFormats
 import org.json4s.JsonAST.JValue
 import org.json4s.native.JsonMethods
@@ -41,6 +43,12 @@ class Client(url: String, user: String, password: String) {
       header("Content-Type", "application/json").asString
   }
 
+  private def put(url: String) =
+    http(url).postData("").method("PUT").asString
+
+  private def delete(url: String) =
+    http(url).method("DELETE").asString
+
   private def getPageData[Data](url: String)
                                (extractor: JValue => Try[Responses.Page[Data]])
   : Either[Seq[Responses.Error], Seq[Data]] = {
@@ -48,7 +56,7 @@ class Client(url: String, user: String, password: String) {
     : Either[Seq[Responses.Error], Seq[Data]] = {
       val response = get(url, ("start", start.toString))
       response.code match {
-        case 200 => Try(JsonMethods.parse(response.body)).flatMap(extractor) match {
+        case HTTP_OK => Try(JsonMethods.parse(response.body)).flatMap(extractor) match {
           case Success(page) =>
             if (page.isLastPage) Right((acc ++ page.values).result)
             else accumulate(page.nextPageStart, acc ++ page.values)
@@ -87,7 +95,7 @@ class Client(url: String, user: String, password: String) {
   : Either[Seq[Responses.Error], T] = {
     val response = post(url, request)
     response.code match {
-      case 201 => Try(JsonMethods.parse(response.body)).flatMap(extractor) match {
+      case HTTP_CREATED => Try(JsonMethods.parse(response.body)).flatMap(extractor) match {
         case Success(result) => Right(result)
         case Failure(e) =>
           throw new Error(
@@ -119,6 +127,41 @@ class Client(url: String, user: String, password: String) {
     }
   }
 
+  /**
+    * Returns if LFS is switched on for the repository.
+    *
+    * @param projectKey
+    * @param repoSlug
+    * @return
+    */
+  def getLfsEnable(projectKey: String, repoSlug: String): Boolean = {
+    val lfsurl = Urls.lsfEnabled(url, projectKey, repoSlug)
+    val response = get(lfsurl)
+    response.code match {
+      case HTTP_OK => true
+      case HTTP_NOT_FOUND => false
+      case x =>
+        throw new Error(
+          s"""$lfsurl
+             |Unexpected Code $x.
+             |${response}
+             |""".stripMargin)
+    }
+  }
+
+  def setLfsEnable(projectKey: String, repoSlug: String, enabled: Boolean) = {
+    val lfsurl = Urls.lsfEnabled(url, projectKey, repoSlug)
+    val response = if (enabled) put(lfsurl) else delete(lfsurl)
+    response.code match {
+      case HTTP_NO_CONTENT => ()
+      case x =>
+        throw new Error(
+          s"""$lfsurl
+             |Unexpected Code $x.
+             |${response}
+             |""".stripMargin)
+    }
+  }
   /**
     * Retrieves users that have been granted at least one global permission.
     *
@@ -204,6 +247,7 @@ object Client {
 
   private object Urls {
     private val api = "rest/api/1.0"
+    private val lsfApi = "rest/git-lfs/admin"
 
     def projects(server: String) = makeUrl(server, api, "projects")
 
@@ -213,6 +257,23 @@ object Client {
     def permisions(server: String) = makeUrl(server, api, "admin/permissions")
 
     def permitsUsers(server: String) = makeUrl(permisions(server), "users")
+
+    /**
+      * Returns url for check whether LFS is enabled for the repository.
+      *
+      * For more information, see answer on the question
+      * [[https://community.atlassian.com/t5/Bitbucket-questions/Enable-LFS-through-Rest-API/qaq-p/100333 "Enable LFS through Rest API"]]
+      *
+      * @param server
+      * @param projectKey
+      * @param repoSlug
+      * @return
+      */
+    def lsfEnabled(server: String,
+                   projectKey: String,
+                   repoSlug: String): String = {
+      makeUrl(server, lsfApi, "projects", projectKey, "repos", repoSlug, "enabled")
+    }
   }
 
   def apply(url: String, user: String, password: String): Client =
