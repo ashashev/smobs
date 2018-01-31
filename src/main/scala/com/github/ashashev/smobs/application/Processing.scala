@@ -7,7 +7,7 @@
 
 package com.github.ashashev.smobs.application
 
-import com.github.ashashev.smobs.application.BitbucketServer.RepoHref
+import com.github.ashashev.smobs.application.BitbucketServer.RepoInfo
 import com.github.ashashev.smobs.core.bitbucket.server.Requests.Project
 
 /**
@@ -37,8 +37,8 @@ trait Processing {
     * @param dstServer
     * @return destination repository if it creates otherwise None
     */
-  def repository(sr: RepoHref,
-                 dr: Option[RepoHref],
+  def repository(sr: RepoInfo,
+                 dr: Option[RepoInfo],
                  dst: Project,
-                 dstServer: BitbucketServer): Option[RepoHref]
+                 dstServer: BitbucketServer): Option[RepoInfo]
 }

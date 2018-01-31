@@ -7,7 +7,7 @@
 
 package com.github.ashashev.smobs.application
 
-import com.github.ashashev.smobs.application.BitbucketServer.RepoHref
+import com.github.ashashev.smobs.application.BitbucketServer.RepoInfo
 import com.github.ashashev.smobs.core.bitbucket.server.Requests.Project
 
 /**
@@ -31,7 +31,9 @@ object FakeProcessing extends Processing {
 
     def pTs(p: Project) = s"${p.name} (${p.key})"
 
-    println(s"""${pTs(sp)} -> ${pTs(dp)} [${state}]""")
+    print(s"""${pTs(sp)} -> ${pTs(dp)} [${state}]""")
+    if (sp.key == dp.key) println("")
+    else RED { println(" Warning! Key was changed") }
 
     if (isPersonal)
       totalUsers += 1
@@ -42,19 +44,21 @@ object FakeProcessing extends Processing {
     else Some((sp, dp))
   }
 
-  def repository(sr: RepoHref,
-                 dr: Option[RepoHref],
+  def repository(sr: RepoInfo,
+                 dr: Option[RepoInfo],
                  dst: Project,
-                 dstServer: BitbucketServer): Option[RepoHref] = {
-    def bTs(value: Boolean) = if (!value) "will be created" else "exists, will be skiped"
-
-    def rTs(r: RepoHref) = s"${r._1.name}"// (${r._2})"
-
+                 dstServer: BitbucketServer): Option[RepoInfo] = {
     val dstExists = dr.isDefined
+    val lfs = if (sr.enabledLfs) " (lfs)" else ""
+
+    def rTs(r: RepoInfo) = s"${r.repo.name}"
 
     val drv = dr.getOrElse(sr)
 
-    println(s"""    ${rTs(sr)} -> ${rTs(drv)} [${bTs(dstExists)}]""")
+    if (dstExists) RED {
+      println(s"""    ${rTs(sr)} -> ${rTs(drv)}${lfs} [exists, will be skipped]""")
+    }
+    else println(s"""    ${rTs(sr)} -> ${rTs(drv)}${lfs} [will be created]""")
 
     totalRepositories += 1
 

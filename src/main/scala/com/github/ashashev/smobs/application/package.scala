@@ -12,6 +12,15 @@ import java.nio.file._
 import java.nio.file.attribute.BasicFileAttributes
 
 package object application {
+  def collored(color: String)(f : => Unit) = {
+    print(s"${Console.RESET}${color}")
+    f
+    print(s"${Console.RESET}")
+  }
+
+  val YELLOW = collored(Console.YELLOW)(_)
+  val RED = collored(Console.RED)(_)
+
   def deleteDirectory(spath: String): Unit = {
     Files.walkFileTree(Paths.get(spath), new FileVisitor[Path] {
       @throws[IOException]

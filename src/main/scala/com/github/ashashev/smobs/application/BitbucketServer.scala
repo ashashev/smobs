@@ -14,7 +14,9 @@ import com.github.ashashev.smobs.core.bitbucket.server._
   * It's wrapper over the [[core.bitbucket.server.Client]]
   */
 class BitbucketServer(url: String, user: String, password: String) {
+
   import BitbucketServer._
+
   private val client = core.bitbucket.server.Client(url, user, password)
 
   private def output(error: Responses.Error, indention: Boolean): Unit = {
@@ -31,11 +33,11 @@ class BitbucketServer(url: String, user: String, password: String) {
     }
   }
 
-  private def getSshHref(r: Responses.Repository): String = {
-    r.links.clone.find(_.name == "ssh") match {
+  private def getHttpHref(r: Responses.Repository): String = {
+    r.links.clone.find(_.name.startsWith("http")) match {
       case Some(l) => l.href
       case None => throw new Error(
-        s"""Can't get ssh url for clone:
+        s"""Can't get a http(s) url for clone:
            |    server: $url
            |    project: ${r.project.key}
            |    project name: ${r.project.name}
@@ -79,12 +81,16 @@ class BitbucketServer(url: String, user: String, password: String) {
     * @param project
     * @return
     */
-  def getRepositories(project: Requests.Project): Seq[RepoHref] = {
+  def getRepositories(project: Requests.Project): Seq[RepoInfo] = {
     client.getRepositories(project.key).
       map(
         _.withFilter(_.origin.isEmpty).
           map { r =>
-            (Requests(r), getSshHref(r))
+            RepoInfo(
+              Requests(r),
+              getHttpHref(r),
+              client.getLfsEnable(project.key, r.slug)
+            )
           }) match {
       case Right(us) => us
       case Left(es) =>
@@ -114,9 +120,14 @@ class BitbucketServer(url: String, user: String, password: String) {
   }
 
   def createRepository(project: Requests.Project,
-                       repository: Requests.Repository): Option[RepoHref] = {
+                       repository: Requests.Repository,
+                       enabledLfs: Boolean): Option[RepoInfo] = {
     client.createRepositories(project.key, repository) match {
-      case Right(r) => Some(Requests(r), getSshHref(r))
+      case Right(r) =>
+        client.setLfsEnable(project.key, r.slug, enabledLfs)
+        val lfs = client.getLfsEnable(project.key, r.slug)
+        assert(enabledLfs == lfs)
+        Some(RepoInfo(Requests(r), getHttpHref(r), lfs))
       case Left(es) =>
         Console.err.println(
           s"""The operation of creatinging repository was failed.
@@ -131,7 +142,10 @@ class BitbucketServer(url: String, user: String, password: String) {
 }
 
 object BitbucketServer {
-  type RepoHref = (Requests.Repository, String)
+
+  final case class RepoInfo(repo: Requests.Repository,
+                            href: String,
+                            enabledLfs: Boolean)
 
   def apply(url: String, user: String, password: String): BitbucketServer =
     new BitbucketServer(url, user, password)
