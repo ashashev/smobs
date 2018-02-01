@@ -1,0 +1,10 @@
+# See http://about.travis-ci.org/docs/user/build-configuration/
+language: scala
+scala:
+  - 2.12.4
+jdk:
+  - openjdk8
+
+script:
+  - ver=$(scala ver.sc); git tag -am "v$ver" "v$ver"
+  - sbt ++$TRAVIS_SCALA_VERSION assembly
