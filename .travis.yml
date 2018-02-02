@@ -20,5 +20,6 @@ deploy:
     - output/smobs
     - output/smobs.cmd
     - output/smobs.jar
+  skip_cleanup: true
   on:
     repo: ashashev/smobs
