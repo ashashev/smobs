@@ -1,0 +1,16 @@
+.classpath
+.project
+.settings/
+.worksheet/
+.cache-main
+.cache-tests
+project/project
+project/target
+target
+*.swp
+bin/
+.idea/
+.ensime
+.ensime_cache/
+*.json
+output/*.jar
