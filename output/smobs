@@ -1,0 +1,6 @@
+#!/bin/bash
+
+scripdir=$(dirname $(readlink -f "$0"))
+jarname=$scripdir/smobs.jar
+
+java -jar "$jarname" "$@"

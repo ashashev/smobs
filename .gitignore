@@ -12,4 +12,5 @@ bin/
 .idea/
 .ensime
 .ensime_cache/
-
+*.json
+output/*.jar
