@@ -13,4 +13,4 @@ bin/
 .ensime
 .ensime_cache/
 *.json
-output/*.jar
+smobs/*.jar

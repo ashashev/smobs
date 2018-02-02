@@ -11,7 +11,7 @@ if __name__ == '__main__':
     ver = sys.argv[2]
 
     indir = os.path.join(workdir, "target", "scala-2.12")
-    outdir = os.path.join(workdir, "output")
+    outdir = os.path.join(workdir, "smobs")
 
     inJarname = "smobs-assembly-" + ver + ".jar"
     outJarname = "smobs.jar"

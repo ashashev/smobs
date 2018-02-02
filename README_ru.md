@@ -1,6 +1,7 @@
 [English](README.md)
 
-# smobs
+# smobs ![build status][build-status]
+
 Утилита для миграции репозиториев с одного Bitbucket Server на другой.
 
 ## Использование
@@ -86,3 +87,4 @@ git lfs push origin --all
 
 [git-credential-store]:https://git-scm.com/docs/git-credential-store
 [git-lfs-ext]:https://git-lfs.github.com/
+[build-status]:https://travis-ci.org/ashashev/smobs.svg?branch=master

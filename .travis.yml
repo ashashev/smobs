@@ -4,7 +4,7 @@ scala:
 jdk:
 - openjdk8
 script:
-- ver=$(python build/ver.py); git tag -am "v$ver" "v$ver"
+#- ver=$(python build/ver.py); git tag -am "v$ver" "v$ver"
 - sbt ++$TRAVIS_SCALA_VERSION assembly
 before_install:
 - openssl aes-256-cbc -K $encrypted_207866316907_key -iv $encrypted_207866316907_iv
@@ -12,14 +12,16 @@ before_install:
   -d
 before_deploy:
 - python build/predeploy.py . $(python build/ver.py)
+- tar -zcf smobs.tar.gz smobs
 deploy:
   provider: releases
   api_key:
     secure: BZixVnNwSuQ8uhwiSV2QXQ07M92Fk16pJVMASM39XdULDF7tixF/7Vwe5b5wBg6fGuo/2dGv01tRQUeweUTH4bbA7RiHUjAhqcfwkmufQATWNUN5d2DOIPyN1tWxpdhHMrod8Yc4ADIkXybG4rmEOL1fG2Pt3T22gNtvtkA3qf1l1873sMecarjgf4b0Cnu5AAUlic/YoG+F+CjMkeCJMObEkq+QMRyENqzARLRdvu2RMwG4UEINjab5HlWTtSa4h5XAE41E0MGlP/19id651zDcACey6nCC2Uc04NW0IvoQgJTzO8qsxUUXYhBZKqmfAR0lq4MHdR1wt/QjZZ0RnacDGAoC2LOZTJ1sO4fl8oFNxzs58iLeyEzKSix0+siG4g1xWMd5S98GDqA401JfRYJ2RQCE/6Lo8BbweGjimgL9ZkPkUPV4wAEM/ARX2tgBpPFmbqbpDkZp3AXfdrOMSWjbP5VWIyPcalry1LucJCaWPxYsfHSU61E/JMJA1lG3rU9dz/Tff18n8FY1/9rx1fviw5jE6hX5T7f/LfEwSo5VBJNW9qWxxvdOoy7lYLMuqjTzaGw1TVyuJ8OfatY7fyidfo9GC+e8PahGjZQZOqx217M/23AXSCQh5dYab2s2CG0A1t3kHNuP4LSI+I393e2HfQQz38wVf+M0xNJLU9M=
+  file_glob: true
   file:
-    - output/smobs
-    - output/smobs.cmd
-    - output/smobs.jar
+    - smobs.tar.gz
+    - target/scala-2.12/*.jar
   skip_cleanup: true
   on:
     repo: ashashev/smobs
+    tags: true
