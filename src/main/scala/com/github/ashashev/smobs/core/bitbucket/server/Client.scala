@@ -54,12 +54,12 @@ class Client(url: String,
   private def delete(url: String) =
     http(url).method("DELETE").asString
 
-  private def getPageData[Data](url: String)
+  private def getPageData[Data](url: String, params: (String, String)*)
                                (extractor: JValue => Try[Responses.Page[Data]])
   : Either[Seq[Responses.Error], Seq[Data]] = {
     def accumulate(start: Int, acc: ListBuffer[Data] = ListBuffer.empty)
     : Either[Seq[Responses.Error], Seq[Data]] = {
-      val response = get(url, ("start", start.toString))
+      val response = get(url, (("start", start.toString) +: params): _*)
       response.code match {
         case HTTP_OK => Try(JsonMethods.parse(response.body)).flatMap(extractor) match {
           case Success(page) =>
@@ -181,6 +181,24 @@ class Client(url: String,
   }
 
   /**
+    * Retrieves groups that have been granted at least one global permission.
+    *
+    * The authenticated user must have ADMIN permission or higher to call this
+    * resource.
+    *
+    * @return
+    */
+  def getPermitsGroups(): Either[Seq[Responses.Error], Seq[Responses.GroupPermission]] = {
+    import Responses._
+    getPageData(Urls.permitsGroups(url))(j => Try(j.extract[Page[GroupPermission]]))
+  }
+
+  def getMembers(group: String): Either[Seq[Responses.Error], Seq[Responses.User]] = {
+    import Responses._
+    getPageData(Urls.groupMembers(url), ("context", group))(j => Try(j.extract[Page[User]]))
+  }
+
+  /**
     * Retrieves projects.
     *
     * Only projects for which the authenticated user has the PROJECT_VIEW
@@ -259,9 +277,17 @@ object Client {
     def repositories(server: String, projectKey: String) =
       makeUrl(projects(server), projectKey, "repos")
 
-    def permisions(server: String) = makeUrl(server, api, "admin/permissions")
+    def admin(server: String) = makeUrl(server, api, "admin")
+
+    def permisions(server: String) = makeUrl(admin(server), "/permissions")
 
     def permitsUsers(server: String) = makeUrl(permisions(server), "users")
+
+    def permitsGroups(server: String) = makeUrl(permisions(server), "groups")
+
+    def groups(server: String) = makeUrl(admin(server), "groups")
+
+    def groupMembers(server: String) = makeUrl(groups(server), "more-members")
 
     /**
       * Returns url for check whether LFS is enabled for the repository.
@@ -284,8 +310,8 @@ object Client {
   def apply(url: String,
             user: String,
             password: String,
-            connectionTimeoutMs: Int,
-            readTimeoutMs: Int): Client =
+            connectionTimeoutMs: Int = 1000,
+            readTimeoutMs: Int = 5000): Client =
     new Client(url, user, password,
       connectionTimeoutMs: Int, readTimeoutMs: Int)
 }

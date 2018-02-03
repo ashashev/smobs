@@ -48,7 +48,10 @@ object Responses {
                   `type`: String,
                   links: Links)
 
+  case class Group(name: String)
+
   case class UserPermission(user: User, permission: String)
+  case class GroupPermission(group: Group, permission: String)
 
   case class Page[T](size: Int,
                      limit: Int,

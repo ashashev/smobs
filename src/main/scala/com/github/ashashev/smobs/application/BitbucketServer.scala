@@ -65,8 +65,15 @@ class BitbucketServer(url: String,
     }
   }
 
+  /**
+    * Retrieves all users that have been granted at least one global permission,
+    * include members of groups that have been granted at least one global
+    * permission.
+    *
+    * @return
+    */
   def getUsers(): Seq[Requests.Project] = {
-    client.getPermitsUsers().map(_.map { up =>
+    val users = client.getPermitsUsers().map(_.map { up =>
       Requests.Project(s"~${up.user.slug}", up.user.name, None)
     }) match {
       case Right(us) => us
@@ -78,6 +85,37 @@ class BitbucketServer(url: String,
         es.foreach(output(_, true))
         Seq.empty
     }
+
+    val groups = client.getPermitsGroups().map(_.map {
+      gp => gp.group.name
+    }) match {
+      case Right(gs) => gs
+      case Left(es) =>
+        Console.err.println(
+          s"""The operation of requesting groups was failed.
+             |    server: $url
+             |Errors:""".stripMargin)
+        es.foreach(output(_, true))
+        Seq.empty
+    }
+
+    val members = groups flatMap { group =>
+      client.getMembers(group).map(_.map { u =>
+        Requests.Project(s"~${u.slug}", u.name, None)
+      }) match {
+        case Right(us) => us
+        case Left(es) =>
+          Console.err.println(
+            s"""The operation of requesting members  was failed.
+               |    server: $url
+               |    group: $group
+               |Errors:""".stripMargin)
+          es.foreach(output(_, true))
+          Seq.empty
+      }
+    }
+
+    (users.toSet ++ members).toSeq
   }
 
   /**
