@@ -6,6 +6,10 @@ jdk:
 script:
 #- ver=$(python build/ver.py); git tag -am "v$ver" "v$ver"
 - sbt ++$TRAVIS_SCALA_VERSION assembly
+cache:
+  directories:
+    - $HOME/.sbt
+    - $HOME/.ivy2
 before_install:
 - openssl aes-256-cbc -K $encrypted_207866316907_key -iv $encrypted_207866316907_iv
   -in id_rsa_github_ashashev_deployment.enc -out id_rsa_github_ashashev_deployment
