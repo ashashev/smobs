@@ -97,7 +97,7 @@ class BitbucketServer(url: String, user: String, password: String) {
         Console.err.println(
           s"""The operation of requesting repositories was failed.
              |    server: $url
-             |    project: ${project.key}
+             |    project key: ${project.key}
              |    project name: ${project.name}
              |Errors:""".stripMargin)
         es.foreach(output(_, true))
@@ -112,7 +112,9 @@ class BitbucketServer(url: String, user: String, password: String) {
         Console.err.println(
           s"""The operation of creating project was failed.
              |    server: $url
-             |    project: $project
+             |    project key: ${project.key}
+             |    project name: ${project.name}
+             |    project description: ${project.description.getOrElse("")}
              |Errors:""".stripMargin)
         es.foreach(output(_, true))
         None
@@ -132,8 +134,11 @@ class BitbucketServer(url: String, user: String, password: String) {
         Console.err.println(
           s"""The operation of creatinging repository was failed.
              |    server: $url
-             |    project: $project
-             |    repository: $repository
+             |    project key: ${project.key}
+             |    project name: ${project.name}
+             |    repository name: ${repository.name}
+             |    repository scmId: ${repository.scmId}
+             |    repository forkable: ${repository.forkable}
              |Errors:""".stripMargin)
         es.foreach(output(_, true))
         None
