@@ -91,6 +91,11 @@ The `git lfs` commands are executed only for repositories with LFS enabled. To m
 
 **The utility does not migrate the permissions of projects and repositories, forks, pool of requests and comments to files.**
 
+# Acknowledgments
+
+I'm grateful to [Shipilov Denis][dartvaper]. He is the first tester and user of this tool. He gave me some very useful advices about CI on the github and some ideas how to make this tool better.
+
 [git-credential-store]:https://git-scm.com/docs/git-credential-store
 [git-lfs-ext]:https://git-lfs.github.com/
 [build-status]:https://travis-ci.org/ashashev/smobs.svg?branch=master
+[dartvaper]:https://github.com/dartvaper

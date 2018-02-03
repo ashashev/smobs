@@ -91,6 +91,11 @@ git lfs push origin --all
 
 **Утилита не производит миграцию разрешений проектов и репозиториев, форков, пул реквестов и комментариев к файлам.**
 
+# Благодарности
+
+Я благодарен [Шипилову Денису][dartvaper]. Он стал первым тестером и пользователем этой утилиты. Он дал мне несколько очень полезных советов о CI на github и несколько идея как сделать эту утилиту лучше.
+
 [git-credential-store]:https://git-scm.com/docs/git-credential-store
 [git-lfs-ext]:https://git-lfs.github.com/
 [build-status]:https://travis-ci.org/ashashev/smobs.svg?branch=master
+[dartvaper]:https://github.com/dartvaper
