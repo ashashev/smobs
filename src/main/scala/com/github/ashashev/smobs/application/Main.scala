@@ -7,6 +7,8 @@
 
 package com.github.ashashev.smobs.application
 
+import com.github.ashashev.smobs.application.Git.Credential
+
 object Main extends App {
   Params.parse(args, Params("smobs.json")) match {
     case Some(Params(_, _, true)) =>
@@ -16,7 +18,11 @@ object Main extends App {
       migrator.travers()
       FakeProcessing.printStatistics()
     case Some(Params(Config(config), false, _)) =>
-      val migrator = MigratorProjects(config, DefaultProcessing)
+      val migrator = MigratorProjects (config, DefaultProcessing(
+        Git(if (config.useCredential) {
+          Some(Credential("git-credential", Set(config.source, config.destination)))
+        } else None)
+      ))
       migrator.travers()
     case _ =>
       System.exit(1)

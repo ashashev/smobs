@@ -14,10 +14,13 @@ import scala.util.{Failure, Success, Try}
 
 case class Server(url: String = "http://example.com",
                   user: String = "<your login>",
-                  password: String = "<your password>")
+                  password: String = "<your password>",
+                  connectionTimeoutMs: Int = 1000,
+                  readTimeoutMs: Int = 5000)
 
 case class Config(source: Server = Server(),
                   destination: Server = Server(),
+                  useCredential: Boolean = false,
                   includeProjects: Seq[String] = Seq(".*"),
                   excludeProjects: Seq[String] = Seq.empty[String],
                   includeUsers: Seq[String] = Seq(".*"),

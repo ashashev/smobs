@@ -35,13 +35,18 @@ java -jar smobs-assembly-0.0.2.jar --help
   "source":{
     "url":"http://example.com",
     "user":"<your login>",
-    "password":"<your password>"
+    "password":"<your password>",
+    "connectionTimeoutMs":1000,
+    "readTimeoutMs":5000
   },
   "destination":{
     "url":"http://example.com",
     "user":"<your login>",
-    "password":"<your password>"
+    "password":"<your password>",
+    "connectionTimeoutMs":1000,
+    "readTimeoutMs":5000
   },
+  "useCredential":false,
   "includeProjects":[
     ".*"
   ],
@@ -63,6 +68,7 @@ java -jar smobs-assembly-0.0.2.jar --help
 * `destination` - параметры доступа к Bitbucket Server на который будут мигрировать проекты.
 * `includeProjects` - список регулярных выражений для отбора проектов для миграции.
 * `excludeProjects` - список регулярных выражений для отбора проектов, которые нужно исключить из миграции. Имеют более высокий приоритет.
+* `useCredential` - создавать и использовать файл для [git credential store][git-credential-store]
 * `includeUsers`, `excludeUsers` - аналогично `includeProjects`, `excludeProjects`, но для миграции персональных проектов.
 * `addedProjectPrefix` - префикс, который будет добавлен к имени проекта на сервере назначения. Так же добавляется для ключа проекта в случаи конфликта.
 
@@ -85,6 +91,11 @@ git lfs push origin --all
 
 **Утилита не производит миграцию разрешений проектов и репозиториев, форков, пул реквестов и комментариев к файлам.**
 
+# Благодарности
+
+Я благодарен [Шипилову Денису][dartvaper]. Он стал первым тестером и пользователем этой утилиты. Он дал мне несколько очень полезных советов о CI на github и несколько идея как сделать эту утилиту лучше.
+
 [git-credential-store]:https://git-scm.com/docs/git-credential-store
 [git-lfs-ext]:https://git-lfs.github.com/
 [build-status]:https://travis-ci.org/ashashev/smobs.svg?branch=master
+[dartvaper]:https://github.com/dartvaper

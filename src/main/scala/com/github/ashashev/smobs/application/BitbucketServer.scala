@@ -13,11 +13,16 @@ import com.github.ashashev.smobs.core.bitbucket.server._
 /**
   * It's wrapper over the [[core.bitbucket.server.Client]]
   */
-class BitbucketServer(url: String, user: String, password: String) {
+class BitbucketServer(url: String,
+                      user: String,
+                      password: String,
+                      connectionTimeoutMs: Int,
+                      readTimeoutMs: Int) {
 
   import BitbucketServer._
 
-  private val client = core.bitbucket.server.Client(url, user, password)
+  private val client = core.bitbucket.server.Client(url, user, password,
+    connectionTimeoutMs, readTimeoutMs)
 
   private def output(error: Responses.Error, indention: Boolean): Unit = {
     val indent = if (indention) "    " else ""
@@ -60,8 +65,15 @@ class BitbucketServer(url: String, user: String, password: String) {
     }
   }
 
+  /**
+    * Retrieves all users that have been granted at least one global permission,
+    * include members of groups that have been granted at least one global
+    * permission.
+    *
+    * @return
+    */
   def getUsers(): Seq[Requests.Project] = {
-    client.getPermitsUsers().map(_.map { up =>
+    val users = client.getPermitsUsers().map(_.map { up =>
       Requests.Project(s"~${up.user.slug}", up.user.name, None)
     }) match {
       case Right(us) => us
@@ -73,6 +85,37 @@ class BitbucketServer(url: String, user: String, password: String) {
         es.foreach(output(_, true))
         Seq.empty
     }
+
+    val groups = client.getPermitsGroups().map(_.map {
+      gp => gp.group.name
+    }) match {
+      case Right(gs) => gs
+      case Left(es) =>
+        Console.err.println(
+          s"""The operation of requesting groups was failed.
+             |    server: $url
+             |Errors:""".stripMargin)
+        es.foreach(output(_, true))
+        Seq.empty
+    }
+
+    val members = groups flatMap { group =>
+      client.getMembers(group).map(_.map { u =>
+        Requests.Project(s"~${u.slug}", u.name, None)
+      }) match {
+        case Right(us) => us
+        case Left(es) =>
+          Console.err.println(
+            s"""The operation of requesting members  was failed.
+               |    server: $url
+               |    group: $group
+               |Errors:""".stripMargin)
+          es.foreach(output(_, true))
+          Seq.empty
+      }
+    }
+
+    (users.toSet ++ members).toSeq
   }
 
   /**
@@ -97,7 +140,7 @@ class BitbucketServer(url: String, user: String, password: String) {
         Console.err.println(
           s"""The operation of requesting repositories was failed.
              |    server: $url
-             |    project: ${project.key}
+             |    project key: ${project.key}
              |    project name: ${project.name}
              |Errors:""".stripMargin)
         es.foreach(output(_, true))
@@ -112,7 +155,9 @@ class BitbucketServer(url: String, user: String, password: String) {
         Console.err.println(
           s"""The operation of creating project was failed.
              |    server: $url
-             |    project: $project
+             |    project key: ${project.key}
+             |    project name: ${project.name}
+             |    project description: ${project.description.getOrElse("")}
              |Errors:""".stripMargin)
         es.foreach(output(_, true))
         None
@@ -132,8 +177,11 @@ class BitbucketServer(url: String, user: String, password: String) {
         Console.err.println(
           s"""The operation of creatinging repository was failed.
              |    server: $url
-             |    project: $project
-             |    repository: $repository
+             |    project key: ${project.key}
+             |    project name: ${project.name}
+             |    repository name: ${repository.name}
+             |    repository scmId: ${repository.scmId}
+             |    repository forkable: ${repository.forkable}
              |Errors:""".stripMargin)
         es.foreach(output(_, true))
         None
@@ -147,9 +195,15 @@ object BitbucketServer {
                             href: String,
                             enabledLfs: Boolean)
 
-  def apply(url: String, user: String, password: String): BitbucketServer =
-    new BitbucketServer(url, user, password)
+  def apply(url: String,
+            user: String,
+            password: String,
+            connectionTimeoutMs: Int,
+            readTimeoutMs: Int): BitbucketServer =
+    new BitbucketServer(url, user, password,
+      connectionTimeoutMs: Int, readTimeoutMs: Int)
 
   def apply(server: Server): BitbucketServer =
-    new BitbucketServer(server.url, server.user, server.password)
+    new BitbucketServer(server.url, server.user, server.password,
+      server.connectionTimeoutMs, server.readTimeoutMs)
 }

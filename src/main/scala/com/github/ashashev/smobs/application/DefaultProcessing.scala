@@ -9,18 +9,22 @@ package com.github.ashashev.smobs.application
 
 import com.github.ashashev.smobs.application.BitbucketServer.RepoInfo
 import com.github.ashashev.smobs.core.bitbucket.server.Requests.Project
-import com.sun.xml.internal.ws.api.message.Message
 
 import sys.process._
 
-object DefaultProcessing extends Processing {
+object DefaultProcessing {
 
   private def toStr(p: Project): String = p.name + "(" + p.key + ")"
+
   private def toStr(r: RepoInfo): String = r.repo.name
 
-  val ident = "    "
+  private val ident = "    "
 
-  private final class GitException(message: String) extends Throwable(message)
+  def apply(git: Git): DefaultProcessing = new DefaultProcessing(git)
+}
+
+class DefaultProcessing(git: Git) extends Processing {
+  import DefaultProcessing._
 
   def project(sp: Project,
               dp: Project,
@@ -71,35 +75,30 @@ object DefaultProcessing extends Processing {
         case Some(dr) =>
           try {
             assert(sr.enabledLfs == dr.enabledLfs)
-            if (Seq("git", "clone", "--bare", sr.href, repoDir).! != 0) {
-              throw new GitException("Cloning was failed")
-            }
+
+            val repo = git.clone(sr.href, repoDir)
+
             if (sr.enabledLfs) {
-              if (Seq("git", "-C", repoDir, "lfs", "fetch", "--all").! != 0) {
-                throw new GitException("Fetching lfs was failed")
-              }
+              repo.fetchLfs()
             }
-            if (Seq("git", "-C", repoDir, "remote", "set-url", "origin", dr.href).! != 0) {
-              throw new GitException("Changing remote was failed")
-            }
-            if (Seq("git", "-C", repoDir, "push", "--all").! != 0) {
-              throw new GitException("Pushing refs was failed")
-            }
-            if (Seq("git", "-C", repoDir, "push", "--tags").! != 0) {
-              throw new GitException("Pushing tags was failed")
-            }
+
+            repo.setOrigin(dr.href)
+
+            repo.pushAll()
+
             if (sr.enabledLfs) {
-              if (Seq("git", "-C", repoDir, "lfs", "push", "origin", "--all").! != 0) {
-                throw new GitException("Pushing lfs was failed")
-              }
+              repo.pushLfsAll()
             }
+
+            repo.close()
+
             println(s"""${toStr(sr)} -> ${toStr(dr)} [Created]""")
           } catch {
-            case ge: GitException => RED {
+            case ge: Git.GitException => RED {
               println(s"""${toStr(sr)} -> ${toStr(dr)} [${ge.getMessage()}]""")
             }
           }
-          deleteDirectory(repoDir)
+
           Some(dr)
         case None =>
           RED {

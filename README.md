@@ -35,13 +35,18 @@ Example:
   "source":{
     "url":"http://example.com",
     "user":"<your login>",
-    "password":"<your password>"
+    "password":"<your password>",
+    "connectionTimeoutMs":1000,
+    "readTimeoutMs":5000
   },
   "destination":{
     "url":"http://example.com",
     "user":"<your login>",
-    "password":"<your password>"
+    "password":"<your password>",
+    "connectionTimeoutMs":1000,
+    "readTimeoutMs":5000
   },
+  "useCredential":false,
   "includeProjects":[
     ".*"
   ],
@@ -61,6 +66,7 @@ Example:
 
 * `source` - parameters for accessing Bitbucket Server which will act as a source.
 * `destination` - the settings for accessing Bitbucket Server to which projects will migrate.
+* `useCredential` - create and use a file for the [git credential store][git-credential-store]
 * `includeProjects` is a list of regular expressions for selecting projects for migration.
 * `excludeProjects` - a list of regular expressions for selecting projects that need to be excluded from migration. Have a higher priority.
 * `includeUsers`, `excludeUsers` - is similar to `includeProjects`, `excludeProjects`, but for the migration of personal projects.
@@ -85,6 +91,11 @@ The `git lfs` commands are executed only for repositories with LFS enabled. To m
 
 **The utility does not migrate the permissions of projects and repositories, forks, pool of requests and comments to files.**
 
+# Acknowledgments
+
+I'm grateful to [Shipilov Denis][dartvaper]. He is the first tester and user of this tool. He gave me some very useful advices about CI on the github and some ideas how to make this tool better.
+
 [git-credential-store]:https://git-scm.com/docs/git-credential-store
 [git-lfs-ext]:https://git-lfs.github.com/
 [build-status]:https://travis-ci.org/ashashev/smobs.svg?branch=master
+[dartvaper]:https://github.com/dartvaper
