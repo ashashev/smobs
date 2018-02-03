@@ -27,13 +27,18 @@ import scalaj.http.Http
   * @param user
   * @param password
   */
-class Client(url: String, user: String, password: String) {
+class Client(url: String,
+             user: String,
+             password: String,
+             connectionTimeoutMs: Int,
+             readTimeoutMs: Int) {
 
   import Client._
 
   private implicit val jsonFormats = DefaultFormats
 
-  private def http(url: String) = Http(url).auth(user, password)
+  private def http(url: String) = Http(url).auth(user, password).
+    timeout(connectionTimeoutMs, readTimeoutMs)
 
   private def get(url: String, params: (String, String)*) =
     http(url).params(params).asString
@@ -276,6 +281,11 @@ object Client {
     }
   }
 
-  def apply(url: String, user: String, password: String): Client =
-    new Client(url, user, password)
+  def apply(url: String,
+            user: String,
+            password: String,
+            connectionTimeoutMs: Int,
+            readTimeoutMs: Int): Client =
+    new Client(url, user, password,
+      connectionTimeoutMs: Int, readTimeoutMs: Int)
 }

@@ -13,11 +13,16 @@ import com.github.ashashev.smobs.core.bitbucket.server._
 /**
   * It's wrapper over the [[core.bitbucket.server.Client]]
   */
-class BitbucketServer(url: String, user: String, password: String) {
+class BitbucketServer(url: String,
+                      user: String,
+                      password: String,
+                      connectionTimeoutMs: Int,
+                      readTimeoutMs: Int) {
 
   import BitbucketServer._
 
-  private val client = core.bitbucket.server.Client(url, user, password)
+  private val client = core.bitbucket.server.Client(url, user, password,
+    connectionTimeoutMs, readTimeoutMs)
 
   private def output(error: Responses.Error, indention: Boolean): Unit = {
     val indent = if (indention) "    " else ""
@@ -152,9 +157,15 @@ object BitbucketServer {
                             href: String,
                             enabledLfs: Boolean)
 
-  def apply(url: String, user: String, password: String): BitbucketServer =
-    new BitbucketServer(url, user, password)
+  def apply(url: String,
+            user: String,
+            password: String,
+            connectionTimeoutMs: Int,
+            readTimeoutMs: Int): BitbucketServer =
+    new BitbucketServer(url, user, password,
+      connectionTimeoutMs: Int, readTimeoutMs: Int)
 
   def apply(server: Server): BitbucketServer =
-    new BitbucketServer(server.url, server.user, server.password)
+    new BitbucketServer(server.url, server.user, server.password,
+      server.connectionTimeoutMs, server.readTimeoutMs)
 }

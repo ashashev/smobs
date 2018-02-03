@@ -35,12 +35,16 @@ java -jar smobs-assembly-0.0.2.jar --help
   "source":{
     "url":"http://example.com",
     "user":"<your login>",
-    "password":"<your password>"
+    "password":"<your password>",
+    "connectionTimeoutMs":1000,
+    "readTimeoutMs":5000
   },
   "destination":{
     "url":"http://example.com",
     "user":"<your login>",
-    "password":"<your password>"
+    "password":"<your password>",
+    "connectionTimeoutMs":1000,
+    "readTimeoutMs":5000
   },
   "includeProjects":[
     ".*"
