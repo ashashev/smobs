@@ -46,6 +46,7 @@ Example:
     "connectionTimeoutMs":1000,
     "readTimeoutMs":5000
   },
+  "useCredential":false,
   "includeProjects":[
     ".*"
   ],
@@ -65,6 +66,7 @@ Example:
 
 * `source` - parameters for accessing Bitbucket Server which will act as a source.
 * `destination` - the settings for accessing Bitbucket Server to which projects will migrate.
+* `useCredential` - create and use a file for the [git credential store][git-credential-store]
 * `includeProjects` is a list of regular expressions for selecting projects for migration.
 * `excludeProjects` - a list of regular expressions for selecting projects that need to be excluded from migration. Have a higher priority.
 * `includeUsers`, `excludeUsers` - is similar to `includeProjects`, `excludeProjects`, but for the migration of personal projects.

@@ -46,6 +46,7 @@ java -jar smobs-assembly-0.0.2.jar --help
     "connectionTimeoutMs":1000,
     "readTimeoutMs":5000
   },
+  "useCredential":false,
   "includeProjects":[
     ".*"
   ],
@@ -67,6 +68,7 @@ java -jar smobs-assembly-0.0.2.jar --help
 * `destination` - параметры доступа к Bitbucket Server на который будут мигрировать проекты.
 * `includeProjects` - список регулярных выражений для отбора проектов для миграции.
 * `excludeProjects` - список регулярных выражений для отбора проектов, которые нужно исключить из миграции. Имеют более высокий приоритет.
+* `useCredential` - создавать и использовать файл для [git credential store][git-credential-store]
 * `includeUsers`, `excludeUsers` - аналогично `includeProjects`, `excludeProjects`, но для миграции персональных проектов.
 * `addedProjectPrefix` - префикс, который будет добавлен к имени проекта на сервере назначения. Так же добавляется для ключа проекта в случаи конфликта.
 

@@ -20,6 +20,7 @@ case class Server(url: String = "http://example.com",
 
 case class Config(source: Server = Server(),
                   destination: Server = Server(),
+                  useCredential: Boolean = false,
                   includeProjects: Seq[String] = Seq(".*"),
                   excludeProjects: Seq[String] = Seq.empty[String],
                   includeUsers: Seq[String] = Seq(".*"),
