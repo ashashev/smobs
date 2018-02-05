@@ -34,8 +34,9 @@ class Client(url: String,
              readTimeoutMs: Int) {
 
   import Client._
+  import Permission._
 
-  private implicit val jsonFormats = DefaultFormats
+  private implicit val jsonFormats = DefaultFormats + PermissionSerializer
 
   private def http(url: String) = Http(url).auth(user, password).
     timeout(connectionTimeoutMs, readTimeoutMs)
