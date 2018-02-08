@@ -22,10 +22,6 @@ import scalaj.http.Http
   *
   * For more information, see description of Bitbucket Server
   * [[https://docs.atlassian.com/bitbucket-server/rest/5.7.0/bitbucket-rest.html REST API]].
-  *
-  * @param url
-  * @param user
-  * @param password
   */
 class Client(url: String,
              user: String,
@@ -34,7 +30,6 @@ class Client(url: String,
              readTimeoutMs: Int) {
 
   import Client._
-  import Permission._
 
   private implicit val jsonFormats = DefaultFormats + PermissionSerializer
 
@@ -135,10 +130,6 @@ class Client(url: String,
 
   /**
     * Returns if LFS is switched on for the repository.
-    *
-    * @param projectKey
-    * @param repoSlug
-    * @return
     */
   def getLfsEnable(projectKey: String, repoSlug: String): Boolean = {
     val lfsurl = Urls.lsfEnabled(url, projectKey, repoSlug)
@@ -148,7 +139,7 @@ class Client(url: String,
       case HTTP_NOT_FOUND => false
       case x =>
         throw new Error(
-          s"""$lfsurl
+          s"""GET: $lfsurl
              |Unexpected Code $x.
              |${response}
              |""".stripMargin)
@@ -162,19 +153,18 @@ class Client(url: String,
       case HTTP_NO_CONTENT => ()
       case x =>
         throw new Error(
-          s"""$lfsurl
+          s"""PUT: $lfsurl
              |Unexpected Code $x.
              |${response}
              |""".stripMargin)
     }
   }
+
   /**
     * Retrieves users that have been granted at least one global permission.
     *
     * The authenticated user must have ADMIN permission or higher to call this
     * resource.
-    *
-    * @return
     */
   def getPermitsUsers(): Either[Seq[Responses.Error], Seq[Responses.UserPermission]] = {
     import Responses._
@@ -186,8 +176,6 @@ class Client(url: String,
     *
     * The authenticated user must have ADMIN permission or higher to call this
     * resource.
-    *
-    * @return
     */
   def getPermitsGroups(): Either[Seq[Responses.Error], Seq[Responses.GroupPermission]] = {
     import Responses._
@@ -204,8 +192,6 @@ class Client(url: String,
     *
     * Only projects for which the authenticated user has the PROJECT_VIEW
     * permission will be returned.
-    *
-    * @return
     */
   def getProjects(): Either[Seq[Responses.Error], Seq[Responses.Project]] = {
     import Responses._
@@ -219,7 +205,6 @@ class Client(url: String,
     * resource.
     *
     * @param project the properties of new project
-    * @return
     */
   def createProject(project: Requests.Project): Either[Seq[Responses.Error], Responses.Project] = {
     import Responses._
@@ -236,7 +221,6 @@ class Client(url: String,
     * The authenticated user must have REPO_READ permission for the specified project to call this resource.
     *
     * @param projectKey the project key
-    * @return
     */
   def getRepositories(projectKey: String): Either[Seq[Responses.Error], Seq[Responses.Repository]] = {
     import Responses._
@@ -257,7 +241,6 @@ class Client(url: String,
     *
     * @param projectKey the project key
     * @param repository the parameters of new repository
-    * @return
     */
   def createRepositories(projectKey: String, repository: Requests.Repository): Either[Seq[Responses.Error], Responses.Repository] = {
     import Responses._
@@ -295,11 +278,6 @@ object Client {
       *
       * For more information, see answer on the question
       * [[https://community.atlassian.com/t5/Bitbucket-questions/Enable-LFS-through-Rest-API/qaq-p/100333 "Enable LFS through Rest API"]]
-      *
-      * @param server
-      * @param projectKey
-      * @param repoSlug
-      * @return
       */
     def lsfEnabled(server: String,
                    projectKey: String,
