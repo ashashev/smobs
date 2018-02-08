@@ -44,8 +44,8 @@ class Client(url: String,
       header("Content-Type", "application/json").asString
   }
 
-  private def put(url: String) =
-    http(url).postData("").method("PUT").asString
+  private def put(url: String, params: (String, String)*) =
+    http(url).postData("").method("PUT").params(params).asString
 
   private def delete(url: String) =
     http(url).method("DELETE").asString
@@ -198,6 +198,170 @@ class Client(url: String,
     getPageData(Urls.projects(url))(j => Try(j.extract[Page[Project]]))
   }
 
+  private def setPermits(url: String, name: String, permission: Permission):
+  Option[Seq[Responses.Error]] = {
+    val response = put(url, "permission" -> permission.value, "name" -> name)
+    response.code match {
+      case HTTP_NO_CONTENT => None
+      case HTTP_BAD_REQUEST =>
+        Try(JsonMethods.parse(response.body)).map(_.extract[Responses.Errors]) match {
+          case Success(es) => Some(es.errors)
+          case Failure(e) =>
+            throw new Error(
+              s"""PUT: $url
+                 |400 Bad Request.
+                 |${response}
+                 |""".stripMargin, e)
+        }
+      case HttpErrorCodes(errorHeader) =>
+        Some(Seq(Responses.Error(message = errorHeader)))
+      case x =>
+        throw new Error(
+          s"""PUT: $url
+             |Unexpected Code $x.
+             |${response}
+             |""".stripMargin)
+    }
+  }
+
+  /**
+    * Retrieve a groups that have been granted at least one permission for the
+    * specified project.
+    *
+    * The authenticated user must have PROJECT_ADMIN permission for the
+    * specified project or a higher global permission to call this resource.
+    */
+  def getProjectPermitsGroups(projectKey: String):
+  Either[Seq[Responses.Error], Seq[Responses.GroupPermission]] = {
+    import Responses._
+    getPageData(Urls.projectPermitsGroups(url, projectKey)) { j =>
+      Try(j.extract[Page[GroupPermission]])
+    }
+  }
+
+  /**
+    * Promote or demote a group's permission level for the specified project.
+    *
+    * Available project permissions are:
+    * <ul>
+    * <li>[[Permission.ProjectAdmin]]</li>
+    * <li>[[Permission.ProjectWrite]]</li>
+    * <li>[[Permission.ProjectRead]]</li>
+    * </ul>
+    *
+    * The authenticated user must have PROJECT_ADMIN permission for the
+    * specified project or a higher global permission to call this resource.
+    * In addition, a user may not demote a group's permission level if their
+    * own permission level would be reduced as a result.
+    */
+  def setProjectPermitsGroup(projectKey: String, group: String, permission: Permission):
+  Option[Seq[Responses.Error]] =
+    setPermits(Urls.projectPermitsGroups(url, projectKey), group, permission)
+
+  /**
+    * Retrieve a page of users that have been granted at least one permission
+    * for the specified project.
+    *
+    * The authenticated user must have PROJECT_ADMIN permission for the
+    * specified project or a higher global permission to call this resource.
+    */
+  def getProjectPermitsUsers(projectKey: String):
+  Either[Seq[Responses.Error], Seq[Responses.UserPermission]] = {
+    import Responses._
+    getPageData(Urls.projectPermitsUsers(url, projectKey)) { j =>
+      Try(j.extract[Page[UserPermission]])
+    }
+  }
+
+  /**
+    * Promote or demote a user's permission level for the specified project.
+    *
+    * Available project permissions are:
+    * <ul>
+    * <li>[[Permission.ProjectAdmin]]</li>
+    * <li>[[Permission.ProjectWrite]]</li>
+    * <li>[[Permission.ProjectRead]]</li>
+    * </ul>
+    *
+    * The authenticated user must have PROJECT_ADMIN permission for the
+    * specified project or a higher global permission to call this resource.
+    * In addition, a user may not reduce their own permission level unless they
+    * have a global permission that already implies that permission.
+    */
+  def setProjectPermitsUser(projectKey: String, user: String, permission: Permission):
+  Option[Seq[Responses.Error]] =
+    setPermits(Urls.projectPermitsUsers(url, projectKey), user, permission)
+
+  /**
+    * Retrieve a groups that have been granted at least one permission
+    * for the specified repository.
+    *
+    * The authenticated user must have REPO_ADMIN permission for the specified
+    * repository or a higher project or global permission to call this resource.
+    */
+  def getRepoPermitsGroups(projectKey: String, slug: String):
+  Either[Seq[Responses.Error], Seq[Responses.GroupPermission]] = {
+    import Responses._
+    getPageData(Urls.repoPermitsGroups(url, projectKey, slug)) { j =>
+      Try(j.extract[Page[GroupPermission]])
+    }
+  }
+
+  /**
+    * Promote or demote a group's permission level for the specified repository.
+    *
+    * Available repository permissions are:
+    * <ul>
+    * <li>[[Permission.RepoAdmin]]</li>
+    * <li>[[Permission.RepoWrite]]</li>
+    * <li>[[Permission.RepoRead]]</li>
+    * </ul>
+    *
+    * The authenticated user must have REPO_ADMIN permission for the specified
+    * repository or a higher project or global permission to call this resource.
+    * In addition, a user may not demote a group's permission level if their own
+    * permission level would be reduced as a result.
+    */
+  def setRepoPermitsGroup(projectKey: String, slug: String, group: String, permission: Permission):
+  Option[Seq[Responses.Error]] =
+    setPermits(Urls.repoPermitsGroups(url, projectKey, slug), group, permission)
+
+  /**
+    * Retrieve a users that have been granted at least one permission for the
+    * specified repository.
+    *
+    * The authenticated user must have REPO_ADMIN permission for the specified
+    * repository or a higher project or global permission to call this resource.
+    */
+  def getRepoPermitsUsers(projectKey: String, slug: String):
+  Either[Seq[Responses.Error], Seq[Responses.UserPermission]] = {
+    import Responses._
+    getPageData(Urls.repoPermitsUsers(url, projectKey, slug)) { j =>
+      Try(j.extract[Page[UserPermission]])
+    }
+  }
+
+  /**
+    * Promote or demote a user's permission level for the specified repository.
+    *
+    * Available repository permissions are:
+    * <ul>
+    * <li>[[Permission.RepoAdmin]]</li>
+    * <li>[[Permission.RepoWrite]]</li>
+    * <li>[[Permission.RepoRead]]</li>
+    * </ul>
+    *
+    * The authenticated user must have REPO_ADMIN permission for the specified
+    * repository or a higher project or global permission to call this resource.
+    * In addition, a user may not reduce their own permission level unless they
+    * have a project or global permission that already implies that permission.
+    */
+  def setRepoPermitsUser(projectKey: String, slug: String, user: String, permission: Permission):
+  Option[Seq[Responses.Error]] =
+    setPermits(Urls.repoPermitsUsers(url, projectKey, slug), user, permission)
+
+///////////////////////////
+
   /**
     * Creates a new project.
     *
@@ -272,6 +436,24 @@ object Client {
     def groups(server: String) = makeUrl(admin(server), "groups")
 
     def groupMembers(server: String) = makeUrl(groups(server), "more-members")
+
+    def projectPermissions(server: String, projectKey: String) =
+      makeUrl(projects(server), projectKey, "permissions")
+
+    def projectPermitsGroups(server: String, projectKey: String) =
+      makeUrl(projectPermissions(server, projectKey), "groups")
+
+    def projectPermitsUsers(server: String, projectKey: String) =
+      makeUrl(projectPermissions(server, projectKey), "users")
+
+    def repoPermissions(server: String, projectKey: String, slug: String) =
+      makeUrl(repositories(server, projectKey), slug, "permissions")
+
+    def repoPermitsGroups(server: String, projectKey: String, slug: String) =
+      makeUrl(repoPermissions(server, projectKey, slug), "groups")
+
+    def repoPermitsUsers(server: String, projectKey: String, slug: String) =
+      makeUrl(repoPermissions(server, projectKey, slug), "users")
 
     /**
       * Returns url for check whether LFS is enabled for the repository.
