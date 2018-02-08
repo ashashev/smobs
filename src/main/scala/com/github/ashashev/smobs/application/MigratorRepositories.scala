@@ -24,7 +24,8 @@ class MigratorRepositoies(source: BitbucketServer,
                           dp: Project,
                           extProcessing: Processing) {
   private def processing(r: RepoInfo, dsr: Seq[RepoInfo]): Seq[RepoInfo] = {
-    extProcessing.repository(r, dsr.find(_.repo.name == r.repo.name), dp, destination) match {
+    extProcessing.repository(r, dsr.find(_.repo.name == r.repo.name),
+      sp, dp, source, destination) match {
       case Some(r) => r +: dsr
       case None => dsr
     }

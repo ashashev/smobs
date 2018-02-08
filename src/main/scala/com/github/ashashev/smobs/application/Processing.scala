@@ -17,28 +17,34 @@ trait Processing {
   /**
     * Processes project
     *
-    * @param sp
-    * @param dp
-    * @param dstServer
-    * @param dstExists
+    * @param sp project on the source server
+    * @param dp project on the the destination server
+    * @param srcServer the source server
+    * @param dstServer the destination server
+    * @param dstExists if project exists on the destination server
     * @return
     */
   def project(sp: Project,
               dp: Project,
+              srcServer: BitbucketServer,
               dstServer: BitbucketServer,
               dstExists: Boolean): Option[(Project, Project)]
 
   /**
     * Processes repository
     *
-    * @param sr
-    * @param dr
-    * @param dst
-    * @param dstServer
+    * @param sr repository on the source server
+    * @param dr repository on the destination server. it it doesn't exists dr is None
+    * @param sp project on the source server
+    * @param dp project on the the destination server
+    * @param srcServer the source server
+    * @param dstServer the destination server
     * @return destination repository if it creates otherwise None
     */
   def repository(sr: RepoInfo,
                  dr: Option[RepoInfo],
-                 dst: Project,
+                 sp: Project,
+                 dp: Project,
+                 srcServer: BitbucketServer,
                  dstServer: BitbucketServer): Option[RepoInfo]
 }

@@ -28,6 +28,7 @@ class DefaultProcessing(git: Git) extends Processing {
 
   def project(sp: Project,
               dp: Project,
+              srcServer: BitbucketServer,
               dstServer: BitbucketServer,
               dstExists: Boolean): Option[(Project, Project)] = {
     val isPersonal = dp.key.startsWith("~")
@@ -60,7 +61,9 @@ class DefaultProcessing(git: Git) extends Processing {
 
   def repository(sr: RepoInfo,
                  dr: Option[RepoInfo],
-                 dst: Project,
+                 sp: Project,
+                 dp: Project,
+                 srcServer: BitbucketServer,
                  dstServer: BitbucketServer): Option[RepoInfo] = {
     val repoDir = "processing_repo"
     deleteDirectory(repoDir)
@@ -71,7 +74,7 @@ class DefaultProcessing(git: Git) extends Processing {
       }
       None
     } else {
-      dstServer.createRepository(dst, sr.repo, sr.enabledLfs) match {
+      dstServer.createRepository(dp, sr.repo, sr.enabledLfs) match {
         case Some(dr) =>
           try {
             assert(sr.enabledLfs == dr.enabledLfs)

@@ -20,9 +20,9 @@ class MigratorProjects(source: BitbucketServer,
   private def processing(p: Project, ds: Seq[Project]): Option[(Project, Project, Seq[Project])] = {
     transformer.transform(p, ds) match {
       case (np, ProjectTransformer.Exist) =>
-        extProcessing.project(p, np, destination, true).map(ps => (ps._1, ps._2, ds))
+        extProcessing.project(p, np, source, destination, true).map(ps => (ps._1, ps._2, ds))
       case (np, ProjectTransformer.NotExist) =>
-        extProcessing.project(p, np, destination, false).map(ps => (ps._1, ps._2, ps._2 +: ds))
+        extProcessing.project(p, np, source, destination, false).map(ps => (ps._1, ps._2, ps._2 +: ds))
     }
   }
 
