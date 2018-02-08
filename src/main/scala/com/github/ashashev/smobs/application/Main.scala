@@ -21,7 +21,8 @@ object Main extends App {
       val migrator = MigratorProjects (config, DefaultProcessing(
         Git(if (config.useCredential) {
           Some(Credential("git-credential", Set(config.source, config.destination)))
-        } else None)
+        } else None),
+        config.copyPermissions
       ))
       migrator.travers()
     case _ =>

@@ -46,7 +46,8 @@ java -jar smobs-assembly-0.0.2.jar --help
     "connectionTimeoutMs":1000,
     "readTimeoutMs":5000
   },
-  "useCredential":false,
+  "useCredential":true,
+  "copyPermissions":true,
   "includeProjects":[
     ".*"
   ],
@@ -69,6 +70,7 @@ java -jar smobs-assembly-0.0.2.jar --help
 * `includeProjects` - список регулярных выражений для отбора проектов для миграции.
 * `excludeProjects` - список регулярных выражений для отбора проектов, которые нужно исключить из миграции. Имеют более высокий приоритет.
 * `useCredential` - создавать и использовать файл для [git credential store][git-credential-store]
+* `copyPermissions` - copy permissions
 * `includeUsers`, `excludeUsers` - аналогично `includeProjects`, `excludeProjects`, но для миграции персональных проектов.
 * `addedProjectPrefix` - префикс, который будет добавлен к имени проекта на сервере назначения. Так же добавляется для ключа проекта в случаи конфликта.
 
