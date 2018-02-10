@@ -23,7 +23,7 @@ object Responses {
                      id: Int,
                      name: String,
                      description: Option[String],
-                     public: Option[Boolean],
+                     public: Boolean = false,
                      `type`: String,
                      links: Links)
 

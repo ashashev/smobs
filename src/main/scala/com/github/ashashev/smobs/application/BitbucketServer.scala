@@ -74,7 +74,7 @@ class BitbucketServer(url: String,
     */
   def getUsers(): Seq[Requests.Project] = {
     val users = client.getPermitsUsers().map(_.map { up =>
-      Requests.Project(s"~${up.user.slug}", up.user.name, None)
+      Requests.Project(s"~${up.user.slug}", up.user.name, None, false)
     }) match {
       case Right(us) => us
       case Left(es) =>
@@ -101,7 +101,7 @@ class BitbucketServer(url: String,
 
     val members = groups flatMap { group =>
       client.getMembers(group).map(_.map { u =>
-        Requests.Project(s"~${u.slug}", u.name, None)
+        Requests.Project(s"~${u.slug}", u.name, None, false)
       }) match {
         case Right(us) => us
         case Left(es) =>

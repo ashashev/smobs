@@ -25,13 +25,13 @@ object Requests {
       Serialization.write(this)
   }
 
-  final case class Project(key: String, name: String, description: Option[String]) extends Request
+  final case class Project(key: String, name: String, description: Option[String], public: Boolean) extends Request
 
-  final case class Repository(name: String, scmId: String, forkable: Boolean) extends Request
+  final case class Repository(name: String, scmId: String, forkable: Boolean, public: Boolean) extends Request
 
   def apply(p: Responses.Project) =
-    Project(p.key, p.name, p.description)
+    Project(p.key, p.name, p.description, p.public)
 
   def apply(r: Responses.Repository) =
-    Repository(r.name, r.scmId, r.forkable)
+    Repository(r.name, r.scmId, r.forkable, r.public)
 }
