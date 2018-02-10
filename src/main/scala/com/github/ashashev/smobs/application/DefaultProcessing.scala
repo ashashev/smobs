@@ -38,6 +38,8 @@ class DefaultProcessing(git: Git, copyPermissions: Boolean) extends Processing {
     for((user, permission) <- srcServer.getProjectPermitsUsers(sp)) {
       dstServer.setProjectPermitsUser(dp, user, permission)
     }
+
+    dstServer.setDefaultPermits(dp, srcServer.getDefaultPermits(sp))
   } else {}
 
   private def copyRepoPermissions(sr: RepoInfo,

@@ -253,6 +253,42 @@ class BitbucketServer(url: String,
     }
   }
 
+  private val projectPermissions = Seq(
+    Permission.ProjectAdmin, Permission.ProjectWrite, Permission.ProjectRead)
+
+  def getDefaultPermits(project: Requests.Project): Seq[(Permission, Boolean)] = {
+    for {p <- projectPermissions} yield p -> { client.getDefaultPermissions(project.key, p) match {
+      case Right(b) => b
+      case Left(es) =>
+        Console.err.println(
+          s"""The operation of get default permission was failed
+             |    server: $url
+             |    project key: ${project.key}
+             |    project name: ${project.name}
+             |    permission: ${p.value}
+             |Errors:""".stripMargin)
+        es.foreach(output(_, true))
+        false
+    }}
+  }
+
+  def setDefaultPermits(project: Requests.Project, ps: Seq[(Permission, Boolean)]): Unit = {
+    for ( (p, a) <- ps ) {
+      client.setDefaultPermissions(project.key, p, a) match {
+        case None => ()
+        case Some(es) =>
+          Console.err.println(
+            s"""The operation of set default permission was failed
+               |    server: $url
+               |    project key: ${project.key}
+               |    project name: ${project.name}
+               |    permission: ${p.value}
+               |Errors:""".stripMargin)
+          es.foreach(output(_, true))
+      }
+    }
+  }
+
   def getRepoPermitsGroups(project: Requests.Project, repo: RepoInfo): Seq[(String, Permission)] = {
     client.getRepoPermitsGroups(project.key, repo.slug).
       map(_.map(gp => gp.group.name -> gp.permission)) match {

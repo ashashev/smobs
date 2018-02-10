@@ -10,7 +10,7 @@ package com.github.ashashev.smobs.core.bitbucket.server
 import java.net.HttpURLConnection._
 
 import org.json4s.DefaultFormats
-import org.json4s.JsonAST.JValue
+import org.json4s.JsonAST.{JBool, JValue}
 import org.json4s.native.JsonMethods
 
 import scala.collection.mutable.ListBuffer
@@ -38,6 +38,11 @@ class Client(url: String,
 
   private def get(url: String, params: (String, String)*) =
     http(url).params(params).asString
+
+  private def post(url: String, data: String, params: (String, String)*) = {
+    http(url).postData(data).params(params).
+      header("Content-Type", "application/json").asString
+  }
 
   private def post(url: String, request: Requests.Request) = {
     http(url).postData(request.toJson()).
@@ -182,9 +187,87 @@ class Client(url: String,
     getPageData(Urls.permitsGroups(url))(j => Try(j.extract[Page[GroupPermission]]))
   }
 
+  /**
+    * Retrieves memebers of the group
+    *
+    * The authenticated user must have ADMIN permission or higher to call this
+    * resource.
+    */
   def getMembers(group: String): Either[Seq[Responses.Error], Seq[Responses.User]] = {
     import Responses._
     getPageData(Urls.groupMembers(url), ("context", group))(j => Try(j.extract[Page[User]]))
+  }
+
+  /**
+    * Check whether the specified permission is the default permission (granted
+    * to all users) for a project.
+    *
+    * The authenticated user must have PROJECT_ADMIN permission for the
+    * specified project or a higher global permission to call this resource.
+    */
+  def getDefaultPermissions(projectKey: String, permission: Permission):
+  Either[Seq[Responses.Error], Boolean] = {
+    val u = Urls.projectDefaultPermits(url, projectKey, permission)
+    val response = get(u)
+    response.code match {
+      case HTTP_OK => JsonMethods.parse(response.body) \ "permitted" match {
+        case JBool(v) => Right(v)
+        case _ =>
+          throw new Error(
+            s"""$u
+               |throw new Error("No usable value for permitted")
+               |${response}
+               |""".stripMargin)
+      }
+      case HttpErrorCodes(errorHeader) =>
+        Try(JsonMethods.parse(response.body)).map(_.extract[Responses.Errors]) match {
+          case Success(es) => Left(es.errors)
+          case Failure(e) =>
+            throw new Error(
+              s"""$u
+                 |$errorHeader
+                 |${response}
+                 |""".stripMargin, e)
+        }
+      case x =>
+        throw new Error(
+          s"""$u
+             |Unexpected Code $x.
+             |${response}
+             |""".stripMargin)
+    }
+  }
+
+  /**
+    * Grant or revoke a project permission to all users, i.e. set the default
+    * permission.
+    *
+    * The authenticated user must have PROJECT_ADMIN permission for the
+    * specified project or a higher global permission to call this resource.
+    */
+  def setDefaultPermissions(projectKey: String, permission: Permission, allow: Boolean):
+  Option[Seq[Responses.Error]] = {
+    val u = Urls.projectDefaultPermits(url, projectKey, permission)
+    val response = post(u, "", ("allow" -> s"$allow"))
+    response.code match {
+      case HTTP_NO_CONTENT => None
+      case HttpErrorCodes(errorHeader) =>
+        Try(JsonMethods.parse(response.body)).map(_.extract[Responses.Errors]) match {
+          case Success(es) => Some(es.errors)
+          case Failure(e) =>
+            throw new Error(
+              s"""$u
+                 |$errorHeader
+                 |${response}
+                 |""".stripMargin, e)
+        }
+      case x =>
+        throw new Error(
+          s"""$u
+             |Unexpected Code $x.
+             |${response}
+             |""".stripMargin)
+    }
   }
 
   /**
@@ -360,7 +443,7 @@ class Client(url: String,
   Option[Seq[Responses.Error]] =
     setPermits(Urls.repoPermitsUsers(url, projectKey, slug), user, permission)
 
-///////////////////////////
+  ///////////////////////////
 
   /**
     * Creates a new project.
@@ -445,6 +528,9 @@ object Client {
 
     def projectPermitsUsers(server: String, projectKey: String) =
       makeUrl(projectPermissions(server, projectKey), "users")
+
+    def projectDefaultPermits(server: String, projectKey: String, permission: Permission) =
+      makeUrl(projectPermissions(server, projectKey), permission.value, "all")
 
     def repoPermissions(server: String, projectKey: String, slug: String) =
       makeUrl(repositories(server, projectKey), slug, "permissions")
