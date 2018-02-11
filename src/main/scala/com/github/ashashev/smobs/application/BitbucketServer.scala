@@ -151,7 +151,9 @@ class BitbucketServer(url: String,
 
   def createProject(project: Requests.Project): Option[Requests.Project] = {
     client.createProject(project).map(Requests(_)) match {
-      case Right(p) => Some(p)
+      case Right(p) =>
+        revokeProjectPermitsUser(p, user)
+        Some(p)
       case Left(es) =>
         Console.err.println(
           s"""The operation of creating project was failed.
@@ -221,6 +223,21 @@ class BitbucketServer(url: String,
     }
   }
 
+  def revokeProjectPermitsGroup(project: Requests.Project, group: String) = {
+    client.revokeProjectPermitsGroup(project.key, group) match {
+      case None => ()
+      case Some(es) =>
+        Console.err.println(
+          s"""The operation of revoking group permissions was failed
+             |    server: $url
+             |    project key: ${project.key}
+             |    project name: ${project.name}
+             |    group: ${group}
+             |Errors:""".stripMargin)
+        es.foreach(output(_, true))
+    }
+  }
+
   def getProjectPermitsUsers(project: Requests.Project): Seq[(String, Permission)] = {
     client.getProjectPermitsUsers(project.key).
       map(_.map(up => up.user.name -> up.permission)) match {
@@ -248,6 +265,21 @@ class BitbucketServer(url: String,
              |    project name: ${project.name}
              |    group: ${user}
              |    permission: ${permission.value}
+             |Errors:""".stripMargin)
+        es.foreach(output(_, true))
+    }
+  }
+
+  def revokeProjectPermitsUser(project: Requests.Project, user: String) = {
+    client.revokeProjectPermitsUser(project.key, user) match {
+      case None => ()
+      case Some(es) =>
+        Console.err.println(
+          s"""The operation of revoking user permissions was failed
+             |    server: $url
+             |    project key: ${project.key}
+             |    project name: ${project.name}
+             |    user: ${user}
              |Errors:""".stripMargin)
         es.foreach(output(_, true))
     }

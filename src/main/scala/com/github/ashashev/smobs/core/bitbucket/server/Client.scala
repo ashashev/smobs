@@ -34,26 +34,24 @@ class Client(url: String,
   private implicit val jsonFormats = DefaultFormats + PermissionSerializer
 
   private def http(url: String) = Http(url).auth(user, password).
-    timeout(connectionTimeoutMs, readTimeoutMs)
+    timeout(connectionTimeoutMs, readTimeoutMs).header("Content-Type", "application/json")
 
   private def get(url: String, params: (String, String)*) =
     http(url).params(params).asString
 
   private def post(url: String, data: String, params: (String, String)*) = {
-    http(url).postData(data).params(params).
-      header("Content-Type", "application/json").asString
+    http(url).postData(data).params(params).asString
   }
 
   private def post(url: String, request: Requests.Request) = {
-    http(url).postData(request.toJson()).
-      header("Content-Type", "application/json").asString
+    http(url).postData(request.toJson()).asString
   }
 
   private def put(url: String, params: (String, String)*) =
     http(url).postData("").method("PUT").params(params).asString
 
-  private def delete(url: String) =
-    http(url).method("DELETE").asString
+  private def delete(url: String, params: (String, String)*) =
+    http(url).postData("").method("DELETE").params(params).asString
 
   private def getPageData[Data](url: String, params: (String, String)*)
                                (extractor: JValue => Try[Responses.Page[Data]])
@@ -307,6 +305,31 @@ class Client(url: String,
     }
   }
 
+  private def revokePermits(url: String, name: String): Option[Seq[Responses.Error]] = {
+    val response = delete(url, "name" -> name)
+    response.code match {
+      case HTTP_NO_CONTENT => None
+      case HTTP_BAD_REQUEST =>
+        Try(JsonMethods.parse(response.body)).map(_.extract[Responses.Errors]) match {
+          case Success(es) => Some(es.errors)
+          case Failure(e) =>
+            throw new Error(
+              s"""DELETE: $url
+                 |400 Bad Request.
+                 |${response}
+                 |""".stripMargin, e)
+        }
+      case HttpErrorCodes(errorHeader) =>
+        Some(Seq(Responses.Error(message = errorHeader)))
+      case x =>
+        throw new Error(
+          s"""DELETE: $url
+             |Unexpected Code $x.
+             |${response}
+             |""".stripMargin)
+    }
+  }
+
   /**
     * Retrieve a groups that have been granted at least one permission for the
     * specified project.
@@ -374,6 +397,30 @@ class Client(url: String,
   def setProjectPermitsUser(projectKey: String, user: String, permission: Permission):
   Option[Seq[Responses.Error]] =
     setPermits(Urls.projectPermitsUsers(url, projectKey), user, permission)
+
+  /**
+    * Revoke all permissions for the specified project for a user.
+    *
+    * The authenticated user must have PROJECT_ADMIN permission for the
+    * specified project or a higher global permission to call this resource.
+    *
+    * In addition, a user may not revoke their own project permissions if they
+    * do not have a higher global permission.
+    */
+  def revokeProjectPermitsGroup(projectKey: String, group: String): Option[Seq[Responses.Error]] =
+    revokePermits(Urls.projectPermitsGroups(url, projectKey), group)
+
+  /**
+    * Revoke all permissions for the specified project for a user.
+    *
+    * The authenticated user must have PROJECT_ADMIN permission for the
+    * specified project or a higher global permission to call this resource.
+    *
+    * In addition, a user may not revoke their own project permissions if they
+    * do not have a higher global permission.
+    */
+  def revokeProjectPermitsUser(projectKey: String, user: String): Option[Seq[Responses.Error]] =
+    revokePermits(Urls.projectPermitsUsers(url, projectKey), user)
 
   /**
     * Retrieve a groups that have been granted at least one permission
