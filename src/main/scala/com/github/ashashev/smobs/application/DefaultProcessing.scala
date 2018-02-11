@@ -20,14 +20,46 @@ object DefaultProcessing {
 
   private val ident = "    "
 
-  def apply(git: Git): DefaultProcessing = new DefaultProcessing(git)
+  def apply(git: Git, copyPermissions: Boolean): DefaultProcessing =
+    new DefaultProcessing(git, copyPermissions)
 }
 
-class DefaultProcessing(git: Git) extends Processing {
+class DefaultProcessing(git: Git, copyPermissions: Boolean) extends Processing {
   import DefaultProcessing._
+
+  private def copyProjectPermissions(sp: Project,
+                                     dp: Project,
+                                     srcServer: BitbucketServer,
+                                     dstServer: BitbucketServer): Unit = if (copyPermissions) {
+    for((group, permission) <- srcServer.getProjectPermitsGroups(sp)) {
+      dstServer.setProjectPermitsGroup(dp, group, permission)
+    }
+
+    for((user, permission) <- srcServer.getProjectPermitsUsers(sp)) {
+      dstServer.setProjectPermitsUser(dp, user, permission)
+    }
+
+    dstServer.setDefaultPermits(dp, srcServer.getDefaultPermits(sp))
+  } else {}
+
+  private def copyRepoPermissions(sr: RepoInfo,
+                                  dr: RepoInfo,
+                                  sp: Project,
+                                  dp: Project,
+                                  srcServer: BitbucketServer,
+                                  dstServer: BitbucketServer): Unit = if (copyPermissions) {
+    for((group, permission) <- srcServer.getRepoPermitsGroups(sp, sr)) {
+      dstServer.setRepoPermitsGroup(dp, dr, group, permission)
+    }
+
+    for((user, permission) <- srcServer.getRepoPermitsUsers(sp, sr)) {
+      dstServer.setRepoPermitsUser(dp, dr, user, permission)
+    }
+  } else {}
 
   def project(sp: Project,
               dp: Project,
+              srcServer: BitbucketServer,
               dstServer: BitbucketServer,
               dstExists: Boolean): Option[(Project, Project)] = {
     val isPersonal = dp.key.startsWith("~")
@@ -48,6 +80,7 @@ class DefaultProcessing(git: Git) extends Processing {
           print(s"""${toStr(sp)} -> ${toStr(dp)} [Created]""")
           if (sp.key == dp.key) println("")
           else RED { println(" Warning! Key was changed") }
+          copyProjectPermissions(sp, p, srcServer, dstServer)
           Some((sp, p))
         case None =>
           RED {
@@ -60,7 +93,9 @@ class DefaultProcessing(git: Git) extends Processing {
 
   def repository(sr: RepoInfo,
                  dr: Option[RepoInfo],
-                 dst: Project,
+                 sp: Project,
+                 dp: Project,
+                 srcServer: BitbucketServer,
                  dstServer: BitbucketServer): Option[RepoInfo] = {
     val repoDir = "processing_repo"
     deleteDirectory(repoDir)
@@ -71,9 +106,11 @@ class DefaultProcessing(git: Git) extends Processing {
       }
       None
     } else {
-      dstServer.createRepository(dst, sr.repo, sr.enabledLfs) match {
+      dstServer.createRepository(dp, sr.repo, sr.enabledLfs) match {
         case Some(dr) =>
           try {
+            copyRepoPermissions(sr, dr, sp, dp, srcServer, dstServer)
+
             assert(sr.enabledLfs == dr.enabledLfs)
 
             val repo = git.clone(sr.href, repoDir)

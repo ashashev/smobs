@@ -23,7 +23,7 @@ object Responses {
                      id: Int,
                      name: String,
                      description: Option[String],
-                     public: Option[Boolean],
+                     public: Boolean = false,
                      `type`: String,
                      links: Links)
 
@@ -50,8 +50,8 @@ object Responses {
 
   case class Group(name: String)
 
-  case class UserPermission(user: User, permission: String)
-  case class GroupPermission(group: Group, permission: String)
+  case class UserPermission(user: User, permission: Permission)
+  case class GroupPermission(group: Group, permission: Permission)
 
   case class Page[T](size: Int,
                      limit: Int,

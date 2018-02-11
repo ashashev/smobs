@@ -22,6 +22,7 @@ object FakeProcessing extends Processing {
 
   def project(sp: Project,
               dp: Project,
+              srcServer: BitbucketServer,
               dstServer: BitbucketServer,
               dstExists: Boolean): Option[(Project, Project)] = {
     val isPersonal = dp.key.startsWith("~")
@@ -46,7 +47,9 @@ object FakeProcessing extends Processing {
 
   def repository(sr: RepoInfo,
                  dr: Option[RepoInfo],
-                 dst: Project,
+                 sp: Project,
+                 dp: Project,
+                 srcServer: BitbucketServer,
                  dstServer: BitbucketServer): Option[RepoInfo] = {
     val dstExists = dr.isDefined
     val lfs = if (sr.enabledLfs) " (lfs)" else ""
@@ -62,7 +65,7 @@ object FakeProcessing extends Processing {
 
     totalRepositories += 1
 
-    if (dst.key.startsWith("~"))
+    if (dp.key.startsWith("~"))
       personalRepositories += 1
     else
       generalRepositories += 1
